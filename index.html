@@ -203,6 +203,9 @@
 </head>
 <body>
 
+    <!-- 背景音樂：請上傳 bgm.mp3 到 GitHub 倉庫同一目錄 -->
+    <audio id="bgm" src="bgm.mp3" loop preload="auto"></audio>
+
     <div class="stage" id="stage">
         <div class="envelope" onclick="openEnvelope()">
             <div class="envelope-back"></div>
@@ -210,7 +213,6 @@
             <!-- 單純的照片卡牌堆疊 -->
             <div class="album-card" id="albumCard" onclick="event.stopPropagation();">
                 <div class="card-stack" id="cardStack">
-                    <!-- 請將 src 替換為你的照片檔名（可以自由新增更多張） -->
                     <img src="photo19.JPG" class="card-img" alt="照片 19">
                     <img src="photo18.JPG" class="card-img" alt="照片 18">
                     <img src="photo17.HEIC" class="card-img" alt="照片 17">
@@ -249,6 +251,15 @@
             const stage = document.getElementById('stage');
             if (!stage.classList.contains('open')) {
                 stage.classList.add('open');
+                
+                // 拆開信封時自動播放音樂
+                const audio = document.getElementById('bgm');
+                if (audio) {
+                    audio.play().catch(err => {
+                        console.log("Audio play deferred:", err);
+                    });
+                }
+
                 initCards();
             }
         }
@@ -258,7 +269,6 @@
             const cards = Array.from(stack.querySelectorAll('.card-img'));
 
             cards.forEach((card, index) => {
-                // 手指滑動與點擊監聽
                 let startX = 0;
                 let isDragging = false;
 
@@ -273,7 +283,6 @@
                     const endX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
                     const diffX = endX - startX;
 
-                    // 點擊或滑動超過 20px 均觸發卡牌飛走切換
                     if (Math.abs(diffX) > 20 || Math.abs(diffX) === 0) {
                         nextCard(card);
                     }
@@ -287,11 +296,9 @@
         }
 
         function nextCard(card) {
-            // 觸發絲滑卡片飛走動畫
             card.classList.add('swipe-out');
 
             setTimeout(() => {
-                // 動畫結束後把這張牌放到最底層並重置位置，實現無限循環滑動
                 card.classList.remove('swipe-out');
                 const stack = document.getElementById('cardStack');
                 stack.insertBefore(card, stack.firstChild);
