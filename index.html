@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>我們的回憶相冊</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* 晚霞海風動態背景 */
+            background: linear-gradient(-45deg, #ff7e5f, #feb47b, #ff758c, #ff7eb3);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 3D 舞台 */
+        .stage {
+            position: relative;
+            width: 320px;
+            height: 220px;
+            cursor: pointer;
+        }
+
+        /* 純白立體信封 */
+        .envelope {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            transition: transform 0.6s ease;
+        }
+
+        .envelope-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            border-radius: 8px;
+        }
+
+        /* 相冊卡片容器（初始藏在信封內） */
+        .album-card {
+            position: absolute;
+            top: 10px;
+            left: 5%;
+            width: 90%;
+            height: 90%;
+            border-radius: 12px;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2;
+            opacity: 0;
+        }
+
+        /* 純白信封正面口袋 */
+        .envelope-front {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .envelope-front::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            border-left: 160px solid #ffffff;
+            border-top: 110px solid transparent;
+            border-bottom: 110px solid #ffffff;
+            border-radius: 0 0 0 8px;
+        }
+
+        .envelope-front::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border-right: 160px solid #fafafa;
+            border-top: 110px solid transparent;
+            border-bottom: 110px solid #fafafa;
+            border-radius: 0 0 8px 0;
+        }
+
+        /* 3D 純白頂蓋 */
+        .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            border-left: 160px solid transparent;
+            border-right: 160px solid transparent;
+            border-top: 120px solid #ffffff;
+            transform-origin: top;
+            transition: transform 0.6s ease, z-index 0.2s 0.3s;
+            z-index: 4;
+        }
+
+        /* 笑臉標誌 */
+        .smile-seal {
+            position: absolute;
+            top: -110px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            animation: bounce 1.5s infinite ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-6px); }
+        }
+
+        .tip-text {
+            position: absolute;
+            bottom: -50px;
+            width: 100%;
+            text-align: center;
+            color: #ffffff;
+            font-size: 1.05rem;
+            font-weight: 600;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
+            transition: opacity 0.4s ease;
+        }
+
+        /* 點擊展開後的動畫 */
+        .stage.open .flap {
+            transform: rotateX(180deg);
+            z-index: 1;
+        }
+
+        .stage.open .album-card {
+            opacity: 1;
+            animation: extractAndExpand 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.5s;
+            z-index: 10;
+        }
+
+        .stage.open .tip-text {
+            opacity: 0;
+        }
+
+        @keyframes extractAndExpand {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+            40% {
+                transform: translateY(-220px) scale(1);
+            }
+            100% {
+                transform: translateY(-40px) scale(1.35);
+            }
+        }
+
+        /* 卡牌相冊區塊 */
+        .card-stack {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            border-radius: 12px;
+        }
+
+        .card-img {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
+            cursor: pointer;
+        }
+
+        /* 卡牌切換飛走動畫 */
+        .card-img.swipe-out {
+            transform: translateX(120%) rotate(15deg) scale(0.9) !important;
+            opacity: 0 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stage" id="stage">
+        <div class="envelope" onclick="openEnvelope()">
+            <div class="envelope-back"></div>
+            
+            <!-- 單純的照片卡牌堆疊 -->
+            <div class="album-card" id="albumCard" onclick="event.stopPropagation();">
+                <div class="card-stack" id="cardStack">
+                    <!-- 請將 src 替換為你的照片檔名（可以自由新增更多張） -->
+                    <img src="photo3.jpg" class="card-img" alt="照片 3">
+                    <img src="photo2.jpg" class="card-img" alt="照片 2">
+                    <img src="photo1.jpg" class="card-img" alt="照片 1">
+                </div>
+            </div>
+
+            <div class="envelope-front"></div>
+            
+            <!-- 純白頂蓋與笑臉 -->
+            <div class="flap">
+                <div class="smile-seal">😊</div>
+            </div>
+        </div>
+
+        <div class="tip-text" id="tipText">點擊拆開相冊信封 🌅</div>
+    </div>
+
+    <script>
+        function openEnvelope() {
+            const stage = document.getElementById('stage');
+            if (!stage.classList.contains('open')) {
+                stage.classList.add('open');
+                initCards();
+            }
+        }
+
+        function initCards() {
+            const stack = document.getElementById('cardStack');
+            const cards = Array.from(stack.querySelectorAll('.card-img'));
+
+            cards.forEach((card, index) => {
+                // 手指滑動與點擊監聽
+                let startX = 0;
+                let isDragging = false;
+
+                const start = (e) => {
+                    startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                    isDragging = true;
+                };
+
+                const end = (e) => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    const endX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
+                    const diffX = endX - startX;
+
+                    // 點擊或滑動超過 20px 均觸發卡牌飛走切換
+                    if (Math.abs(diffX) > 20 || Math.abs(diffX) === 0) {
+                        nextCard(card);
+                    }
+                };
+
+                card.addEventListener('touchstart', start);
+                card.addEventListener('touchend', end);
+                card.addEventListener('mousedown', start);
+                card.addEventListener('mouseup', end);
+            });
+        }
+
+        function nextCard(card) {
+            // 觸發絲滑卡片飛走動畫
+            card.classList.add('swipe-out');
+
+            setTimeout(() => {
+                // 動畫結束後把這張牌放到最底層並重置位置，實現無限循環滑動
+                card.classList.remove('swipe-out');
+                const stack = document.getElementById('cardStack');
+                stack.insertBefore(card, stack.firstChild);
+            }, 500);
+        }
+    </script>
+
+</body>
+</html>
